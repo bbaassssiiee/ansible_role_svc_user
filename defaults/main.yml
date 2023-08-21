@@ -1,8 +1,10 @@
 ---
-# defaults for service account
+# defaults for service account, override these in group_vars for the environments
 desired_state: present
-svc_user: ansibley
-svc_group: wheel
+svc_user: ansible
+svc_sudo_group: wheel
 svc_user_public_key: "{{ vault_svc_user_public_key }}"
-svc_uid: 34475
-svc_gid: 11298
+svc_distribute_public_key: true
+svc_distribute_private_key: false
+svc_uid: 1000
+svc_gid: 1000

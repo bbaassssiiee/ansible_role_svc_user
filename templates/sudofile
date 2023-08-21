@@ -1,4 +1,0 @@
-# For sudo with ansible pipelining
-Defaults:{{ svc_user }} !requiretty
-# Passwordless access for the Jenkins plugin
-{{ svc_user }}    ALL=(ALL)   NOPASSWD: ALL

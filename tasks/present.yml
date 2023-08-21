@@ -5,64 +5,64 @@
   ansible.builtin.group:
     name: "{{ svc_group }}"
     gid: "{{ svc_gid }}"
+    system: true
 
-- name: Manage service account
+- name: "Manage user {{ svc_user }}"
   become: true
   ansible.builtin.user:
     name: "{{ svc_user }}"
-    group: "{{ svc_group }}"
+    password: "{{ svc_password | password_hash('sha512', ansible_date_time.epoch) }}"
     uid: "{{ svc_uid }}"
+    group: "{{ svc_group }}"
+    groups: "{{ svc_sudo_group }}"
     system: true
     state: present
 
 - name: Manage ~/.ssh/authorized_keys
   become: true
-  ansible.builtin.authorized_key:
+  when:
+    - svc_user_public_key is defined
+    - svc_distribute_public_key | bool
+  ansible.posix.authorized_key:
     user: "{{ svc_user }}"
     key: "{{ svc_user_public_key }}"
     exclusive: true
-
-- name: "Get entry from passwd for {{ svc_user }}"
-  ansible.builtin.getent:
-    database: passwd
-    key: "{{ svc_user }}"
-
-- name: Set home_dir
-  ansible.builtin.set_fact:
-    home_dir: "{{ getent_passwd[svc_user][4] }}"
-
-- name: Manage private ssh key
-  become: true
-  when:
-    - vault_svc_user_private_key is defined
-  ansible.builtin.copy:
-    dest: "{{ home_dir }}/.ssh/id_rsa"
-    owner: "{{ svc_user }}"
-    group: "{{ svc_group }}"
-    mode: 0600
-    setype: ssh_home_t
-    content: "{{ vault_svc_user_private_key }}"
-  no_log: false  # don't log private key
-
-- name: Allow private key type ssh-rsa
-  become: true
-  ansible.builtin.lineinfile:
-    path: "{{ home_dir }}/.ssh/config"
-    owner: "{{ svc_user }}"
-    group: "{{ svc_group }}"
-    mode: 0600
-    setype: ssh_home_t
-    create: true
-    regexp: 'PubkeyAcceptedKeyTypes.*$'
-    line: 'PubkeyAcceptedKeyTypes +ssh-rsa'
     state: present
 
-- name: Create sudoers file
+- name: Manage private key
+  when:
+    - vault_svc_user_private_key is defined
+    - svc_distribute_private_key | bool
+  block:
+    - name: "Get entry from passwd for {{ svc_user }}"
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ svc_user }}"
+
+    - name: Set home_dir
+      ansible.builtin.set_fact:
+        home_dir: "{{ getent_passwd[svc_user][4] }}"
+
+    - name: Manage private ssh key
+      become: true
+      ansible.builtin.copy:
+        dest: "{{ home_dir }}/.ssh/id_rsa"
+        owner: "{{ svc_user }}"
+        group: "{{ svc_group }}"
+        mode: '0600'
+        setype: ssh_home_t
+        content: "{{ vault_svc_user_private_key }}"
+      no_log: false  # don't log private key
+
+- name: Change password for root
   become: true
-  ansible.builtin.template:
-    src: sudofile
-    dest: "/etc/sudoers.d/{{ svc_user }}"
-    owner: root
-    group: root
-    mode: 0440
-    validate: 'bash -c "cat /etc/sudoers %s | visudo -cf-"'
+  ansible.builtin.user:
+    name: root
+    password: "{{ root_password | password_hash('sha512', ansible_date_time.epoch) }}"
+
+# The task above needs the current password, the next task should be last
+- name: "Change password for {{ ansible_user_id }}"
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    password: "{{ svc_password | password_hash('sha512', ansible_date_time.epoch) }}"

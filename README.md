@@ -35,21 +35,9 @@ vault_svc_user_private_key: |
   -----END RSA PRIVATE KEY-----
 ```
 
-`repo_server_ip` Only needed when using Debian.
-
 See `defaults/main.yml` for other variables.
 
-### Required packages
-
-Packages:
-python3
-
-Pypi packages:
-molecule==3.2.3
-ansible<2.10
-
 ### Role variables
-
 
 ### Examples
 

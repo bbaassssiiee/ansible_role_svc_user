@@ -1,6 +1,13 @@
 ---
 
-- name: Manage service account
+- name: Remove ~/.ssh/authorized_keys
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ svc_user }}"
+    key: "{{ svc_user_public_key }}"
+    state: absent
+
+- name: Remove service account
   become: true
   ansible.builtin.user:
     name: "{{ svc_user }}"
@@ -10,16 +17,9 @@
     state: absent
 
 - name: Remove group for service account
+  when: svc_uid == svc_gid
   become: true
   ansible.builtin.group:
     name: "{{ svc_group }}"
     gid: "{{ svc_gid }}"
     state: absent
-
-- name: Remove sudoers file
-  become: true
-  ansible.builtin.file:
-    dest: "/etc/sudoers.d/{{ svc_user }}"
-    state: absent
-
-...
