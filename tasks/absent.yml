@@ -1,0 +1,25 @@
+---
+
+- name: Manage service account
+  become: true
+  ansible.builtin.user:
+    name: "{{ svc_user }}"
+    group: "{{ svc_group }}"
+    uid: "{{ svc_uid }}"
+    system: true
+    state: absent
+
+- name: Remove group for service account
+  become: true
+  ansible.builtin.group:
+    name: "{{ svc_group }}"
+    gid: "{{ svc_gid }}"
+    state: absent
+
+- name: Remove sudoers file
+  become: true
+  ansible.builtin.file:
+    dest: "/etc/sudoers.d/{{ svc_user }}"
+    state: absent
+
+...

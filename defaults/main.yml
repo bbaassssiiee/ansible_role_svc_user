@@ -1,0 +1,8 @@
+---
+# defaults for service account
+desired_state: present
+svc_user: ansibley
+svc_group: wheel
+svc_user_public_key: "{{ vault_svc_user_public_key }}"
+svc_uid: 34475
+svc_gid: 11298

@@ -1,0 +1,21 @@
+---
+
+galaxy_info:
+  role_name: svc_user
+  namespace: bbaassssiiee
+  author: Bas Meijer
+  description: Service account for Ansible
+
+  license: MIT
+
+  min_ansible_version: "2.10.0"
+
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+  galaxy_tags:
+    - system
+    - ansible
+
+dependencies: []
